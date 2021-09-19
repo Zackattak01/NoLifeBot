@@ -5,23 +5,18 @@ using System.Threading.Tasks;
 using Disqord;
 using Disqord.Bot;
 using Disqord.Extensions.Interactivity.Menus.Paged;
+using Disqord.Rest.Api;
 using Microsoft.EntityFrameworkCore;
 using NoLifeBot.Data;
 using NoLifeBot.Extensions;
+using NoLifeBot.Services;
 using Qmmands;
 
 namespace NoLifeBot.Commands.Modules
 {
     [Group("leaderboard")]
-    public class LeaderboardModule : DiscordGuildModuleBase
+    public class LeaderboardModule : DataModule
     {
-        private readonly NoLifeBotDbContext _dbContext;
-
-        public LeaderboardModule(NoLifeBotDbContext dbContext)
-        {
-            _dbContext = dbContext;
-        }
-
         [Command]
         public async Task<DiscordCommandResult> LeaderboardAsync()
         {
@@ -36,6 +31,7 @@ namespace NoLifeBot.Commands.Modules
             (Snowflake UserId, TimeSpan Value) mostTimeDeafened = (default, default);
             (Snowflake UserId, TimeSpan Value) mostTimeStreaming = (default, default);
             (Snowflake UserId, TimeSpan Value) mostTimeInAfk = (default, default);
+            var totalTimesSpentInChannel = new Dictionary<Snowflake, TimeSpan>();
 
             foreach (var voiceHistory in histories)
             {
@@ -66,6 +62,14 @@ namespace NoLifeBot.Commands.Modules
                     if (mostTimeInAfk.Value < timeSpentInAfk)
                         mostTimeInAfk = (voiceHistory.UserId, timeSpentInAfk);
                 }
+
+                foreach (var kvp in voiceHistory.TimesSpentInChannel)
+                {
+                    if (totalTimesSpentInChannel.TryGetValue(kvp.Key, out var value))
+                        totalTimesSpentInChannel[kvp.Key] = value + kvp.Value;
+                    else
+                        totalTimesSpentInChannel.Add(kvp.Key, kvp.Value);
+                }
             }
 
             var e = new LocalEmbed().WithTitle(Context.Guild.Name)
@@ -85,6 +89,10 @@ namespace NoLifeBot.Commands.Modules
 
             if (mostTimeInAfk.UserId != default)
                 e.AddField("Most Time Spent In Afk", $"{Mention.User(mostTimeInAfk.UserId)} - {mostTimeInAfk.Value.GetHumanReadableHours()}");
+            
+            var mostPopularChannel = totalTimesSpentInChannel.OrderByDescending(x => x.Value).FirstOrDefault();
+            if (mostPopularChannel.Value > TimeSpan.Zero)
+                e.AddField("Most Popular Channel", $"{Mention.Channel(mostPopularChannel.Key)} - {mostPopularChannel.Value.GetHumanReadableHours()}");
             
             return Response(e);
         }
@@ -119,40 +127,17 @@ namespace NoLifeBot.Commands.Modules
 
         private async Task<DiscordCommandResult> GetLeaderboardForStatisticAsync(Func<VoiceHistory, TimeSpan> statisticSelector, string title)
         {
-            const int entriesPerPage = 10;
-            
             var histories = (await GetVoiceHistoriesForGuildAsync()).Where(x => statisticSelector(x) > TimeSpan.Zero).OrderByDescending(statisticSelector).ToArray();
-            var pages = new List<Page>(histories.Length / 10 + 1);
-            
-            for (var i = 0; i < histories.Length;)
-            {
-                var embed = new LocalEmbed()
-                    .WithDefaultColor()
-                    .WithTitle(title)
-                    .WithDescription(string.Join("\n", histories[i..Math.Min(i + entriesPerPage, histories.Length)].Select(x => $"{++i}. {Mention.User(x.UserId)} - {statisticSelector(x).GetHumanReadableHours()}")));
 
-                var page = new Page().WithEmbeds(embed);
-                pages.Add(page);
-            }
-
-            if (pages.Count > 0)
-                return Pages(pages);
-            else
+            if (histories.Length == 0)
                 return Response("No data found for this category!");
+
+            var formattedHistories = histories.Select(x => $"{Mention.User(x.UserId)} - {statisticSelector(x).GetHumanReadableHours()}").ToArray();
+
+            var pageProvider = new ArrayPageProvider<string>(formattedHistories, Utilities.Formatter<string>(title));
+            return Pages(pageProvider);
         }
         
-        private async Task<IEnumerable<VoiceHistory>> GetVoiceHistoriesForGuildAsync()
-        {
-            var voicePeriods = await _dbContext.VoicePeriods.Where(x => x.GuildId == Context.GuildId).ToListAsync();
 
-            if (voicePeriods.Count == 0)
-                return null;
-            
-            var uniqueUsers = new HashSet<Snowflake>();
-            foreach (var voicePeriod in voicePeriods)
-                uniqueUsers.Add(voicePeriod.UserId);
-            
-            return uniqueUsers.Select(x => new VoiceHistory(voicePeriods.Where(y => y.UserId == x)));
-        }
     }
 }
