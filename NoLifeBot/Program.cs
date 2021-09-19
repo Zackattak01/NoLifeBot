@@ -59,7 +59,7 @@ namespace NoLifeBot
                 {
                     bot.Token = context.Configuration["discord:token"];
                     bot.OwnerIds = context.Configuration.GetSection("bot:owner_ids").GetChildren().Select(x => Snowflake.Parse(x.Value));
-                    bot.Intents = GatewayIntents.All;
+                    bot.Intents = GatewayIntents.Recommended;
                     bot.Prefixes = context.Configuration.GetSection("bot:prefixes").GetChildren().Select(x => x.Value);
                 });
         }
