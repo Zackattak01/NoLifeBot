@@ -13,11 +13,11 @@ using Qmmands;
 namespace NoLifeBot.Commands.Modules
 {
     [Group("leaderboard")]
-    public class LeaderBoardModule : DiscordGuildModuleBase
+    public class LeaderboardModule : DiscordGuildModuleBase
     {
         private readonly NoLifeBotDbContext _dbContext;
 
-        public LeaderBoardModule(NoLifeBotDbContext dbContext)
+        public LeaderboardModule(NoLifeBotDbContext dbContext)
         {
             _dbContext = dbContext;
         }

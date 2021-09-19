@@ -29,6 +29,8 @@ namespace NoLifeBot.Commands.Modules
             if (voiceHistory is null)
                 return Response($"No voice data recorded for {member.Mention}");
 
+            var favoriteChannel = voiceHistory.TimesSpentInChannel.OrderByDescending(x => x.Value).FirstOrDefault();
+
             var embed = new LocalEmbed()
                 .WithDefaultColor()
                 .WithTitle($"{Context.Guild.Name} - {member.Nick ?? member.Name}")
@@ -36,6 +38,7 @@ namespace NoLifeBot.Commands.Modules
                 .AddField("Time Spent Muted", voiceHistory.TimeSpentMuted.GetHumanReadableHours())
                 .AddField("Time Spent Deafened", voiceHistory.TimeSpentDeafened.GetHumanReadableHours())
                 .AddField("Time Spent Streaming", voiceHistory.TimeSpentStreaming.GetHumanReadableHours());
+                
 
             if (Context.Guild.AfkChannelId is { } afkChannelId)
             {
@@ -43,6 +46,8 @@ namespace NoLifeBot.Commands.Modules
                 embed.AddField("Time Spent In Afk", value.GetHumanReadableHours());
             }
 
+            embed.AddField("Favorite Channel", $"{Mention.Channel(favoriteChannel.Key)} - {favoriteChannel.Value.GetHumanReadableHours()}");
+            
             return Response(embed);
         }
 
