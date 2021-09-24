@@ -6,6 +6,7 @@ using Qmmands;
 
 namespace NoLifeBot.Commands.Modules
 {
+    // TODO: raw sql queries
     [RequireBotOwner]
     public class OwnerModule : DiscordGuildModuleBase
     {

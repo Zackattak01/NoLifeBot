@@ -122,7 +122,7 @@ namespace NoLifeBot.Commands.Modules
             {
                 x.TimesSpentInChannel.TryGetValue(Context.Guild.AfkChannelId.Value, out var value);
                 return value;
-            }, "Time in VC Leaderboard");
+            }, "Time Spent In Afk Leaderboard");
         }
 
         private async Task<DiscordCommandResult> GetLeaderboardForStatisticAsync(Func<VoiceHistory, TimeSpan> statisticSelector, string title)
