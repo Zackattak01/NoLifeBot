@@ -61,6 +61,7 @@ namespace NoLifeBot
                     bot.OwnerIds = context.Configuration.GetSection("bot:owner_ids").GetChildren().Select(x => Snowflake.Parse(x.Value));
                     bot.Intents = GatewayIntents.Recommended;
                     bot.Prefixes = context.Configuration.GetSection("bot:prefixes").GetChildren().Select(x => x.Value);
+                    bot.Activities = new[] { LocalActivity.Watching("your every move.") };
                 });
         }
     }
