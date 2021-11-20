@@ -163,7 +163,8 @@ namespace NoLifeBot.Services
 
         private async Task EndCurrentVoicePeriodAsync(Snowflake userId, NoLifeBotDbContext dbContext)
         {
-            var currentVoicePeriod = await dbContext.VoicePeriods.FirstOrDefaultAsync(x => x.UserId == userId && x.EndedAt == null);
+            // safeguard against any lurking double voice period bugs
+            var currentVoicePeriod = await dbContext.VoicePeriods.SingleOrDefaultAsync(x => x.UserId == userId && x.EndedAt == null);
 
             if (currentVoicePeriod is null)
             {
