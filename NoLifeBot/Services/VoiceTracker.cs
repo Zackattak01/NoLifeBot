@@ -164,16 +164,33 @@ namespace NoLifeBot.Services
         private async Task EndCurrentVoicePeriodAsync(Snowflake userId, NoLifeBotDbContext dbContext)
         {
             // safeguard against any lurking double voice period bugs
-            var currentVoicePeriod = await dbContext.VoicePeriods.SingleOrDefaultAsync(x => x.UserId == userId && x.EndedAt == null);
-
-            if (currentVoicePeriod is null)
-            {
-                Logger.LogWarning($"Missing active voice period for user {userId}");
-                return;
-            }
+            var activeVoicePeriods = await dbContext.VoicePeriods.Where(x => x.UserId == userId && x.EndedAt == null).ToListAsync();
             
-            currentVoicePeriod.EndedAt = DateTime.Now;
-            dbContext.Update(currentVoicePeriod);
+            switch (activeVoicePeriods.Count)
+            {
+                case 0:
+                    Logger.LogWarning($"Missing active voice period for user {userId}");
+                    break;
+                case > 1:
+                {
+                    Logger.LogError($"Multiple voice periods are active for user: {userId}! Removing!");
+
+                    foreach (var activeVoicePeriod in activeVoicePeriods)
+                    {
+                        activeVoicePeriod.EndedAt = DateTime.Now;
+                        dbContext.Update(activeVoicePeriod);
+                    }
+
+                    break;
+                }
+                default:
+                {
+                    var currentVoicePeriod = activeVoicePeriods.First();
+                    currentVoicePeriod.EndedAt = DateTime.Now;
+                    dbContext.Update(currentVoicePeriod);
+                    break;
+                }
+            }
         }
 
         private async ValueTask OnMemberConnectedAsync(VoiceStateUpdatedEventArgs e)
