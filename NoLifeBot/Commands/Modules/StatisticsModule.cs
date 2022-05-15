@@ -15,13 +15,6 @@ namespace NoLifeBot.Commands.Modules
     [Group("stats", "statistics")]
     public class StatisticsModule : DataModule
     {
-        private readonly NoLifeBotDbContext _dbContext;
-
-        public StatisticsModule(NoLifeBotDbContext dbContext)
-        {
-            _dbContext = dbContext;
-        }
-
         [Command]
         public async Task<DiscordCommandResult> StatsAsync(IMember member = null)
         {
@@ -79,10 +72,17 @@ namespace NoLifeBot.Commands.Modules
 
         [Command("periods", "period")]
         public async Task<DiscordCommandResult> PeriodsAsync()
-            => Response($"I've recorded a total of {await _dbContext.VoicePeriods.CountAsync()} voice periods!");
+            => Response($"I've recorded a total of {await DbContext.VoicePeriods.CountAsync()} voice periods!");
         
         [Command("periods", "period")]
         public async Task<DiscordCommandResult> PeriodsAsync(IMember member)
-            => Response($"I've recorded {await _dbContext.VoicePeriods.Where(x => x.UserId == member.Id).CountAsync()} voice periods for {member.Mention}!");
+            => Response($"I've recorded {await DbContext.VoicePeriods.Where(x => x.UserId == member.Id).CountAsync()} voice periods for {member.Mention}!");
+
+        [Command("active")]
+        public async Task<DiscordCommandResult> ActiveAsync()
+        {
+            var activePeriods = await DbContext.VoicePeriods.Where(x => x.EndedAt == null).ToListAsync();
+            return Response($"There are {Markdown.Code(activePeriods.Count(x => x.GuildId == Context.GuildId))} active voice periods in this guild and {Markdown.Code(activePeriods.Count)} total");
+        }
     }
 }

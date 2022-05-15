@@ -68,6 +68,10 @@ namespace NoLifeBot.Services
             {
                 foreach (var voiceStatePair in kvp.Value.GetVoiceStates())
                 {
+                    var user = Client.GetUser(voiceStatePair.Value.MemberId) as IUser ?? await Client.FetchUserAsync(voiceStatePair.Value.MemberId);
+                    if (user.IsBot)
+                        continue;
+                    
                     voiceStates.TryAdd(voiceStatePair.Key, voiceStatePair.Value);
                 }
             }
