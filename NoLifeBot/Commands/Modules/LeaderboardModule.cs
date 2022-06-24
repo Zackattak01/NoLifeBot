@@ -36,24 +36,16 @@ namespace NoLifeBot.Commands.Modules
             foreach (var voiceHistory in histories)
             {
                 if (mostTimeInVc.Value < voiceHistory.TotalTimeSpentInVc)
-                {
                     mostTimeInVc = (voiceHistory.UserId, voiceHistory.TotalTimeSpentInVc);
-                }
 
                 if (mostTimeMuted.Value < voiceHistory.TimeSpentMuted)
-                {
                     mostTimeMuted = (voiceHistory.UserId, voiceHistory.TimeSpentMuted);
-                }
 
                 if (mostTimeDeafened.Value < voiceHistory.TimeSpentDeafened)
-                {
                     mostTimeDeafened = (voiceHistory.UserId, voiceHistory.TimeSpentDeafened);
-                }
 
                 if (mostTimeStreaming.Value < voiceHistory.TimeSpentStreaming)
-                {
                     mostTimeStreaming = (voiceHistory.UserId, voiceHistory.TimeSpentStreaming);
-                }
 
                 if (Context.Guild.AfkChannelId is { } afkChannelId)
                 {
