@@ -35,8 +35,9 @@ namespace NoLifeBot.Commands.Modules
 
             foreach (var voiceHistory in histories)
             {
-                if (mostTimeInVc.Value < voiceHistory.TotalTimeSpentInVc)
-                    mostTimeInVc = (voiceHistory.UserId, voiceHistory.TotalTimeSpentInVc);
+                var totalTimeExcludingAfk = voiceHistory.GetTotalTimeExcludingChannel(Context.Guild.AfkChannelId);
+                if (mostTimeInVc.Value < totalTimeExcludingAfk)
+                    mostTimeInVc = (voiceHistory.UserId, totalTimeExcludingAfk);
 
                 if (mostTimeMuted.Value < voiceHistory.TimeSpentMuted)
                     mostTimeMuted = (voiceHistory.UserId, voiceHistory.TimeSpentMuted);
@@ -91,7 +92,7 @@ namespace NoLifeBot.Commands.Modules
 
         [Command("vc", "voice")]
         public Task<DiscordCommandResult> TotalTimeVcLeaderboardAsync()
-            => GetLeaderboardForStatisticAsync(x => x.TotalTimeSpentInVc, "Time Spent In Voice Leaderboard");
+            => GetLeaderboardForStatisticAsync(x => x.GetTotalTimeExcludingChannel(Context.Guild.AfkChannelId), "Time Spent In Voice Leaderboard");
 
         [Command("muted", "mute")]
         public Task<DiscordCommandResult> MutedLeaderboardAsync()
