@@ -18,6 +18,8 @@ namespace NoLifeBot
         public TimeSpan TimeSpentMuted { get; }
         
         public TimeSpan TimeSpentStreaming { get; }
+        
+        public int VoicePeriodCount { get; }
 
         public VoiceHistory(IEnumerable<VoicePeriod> voicePeriods)
         {
@@ -40,13 +42,11 @@ namespace NoLifeBot
                     TimeSpentStreaming += length;
 
                 if (timesSpentInChannel.TryGetValue(voicePeriod.ChannelId, out var timeSpentInChannel))
-                {
                     timesSpentInChannel[voicePeriod.ChannelId] = timeSpentInChannel + length;
-                }
                 else
-                {
                     timesSpentInChannel.Add(voicePeriod.ChannelId, length);
-                }
+
+                VoicePeriodCount++;
             }
 
             TimesSpentInChannel = timesSpentInChannel;
