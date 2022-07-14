@@ -5,11 +5,7 @@ using System.Threading.Tasks;
 using Disqord;
 using Disqord.Bot;
 using Disqord.Extensions.Interactivity.Menus.Paged;
-using Disqord.Rest.Api;
-using Microsoft.EntityFrameworkCore;
-using NoLifeBot.Data;
 using NoLifeBot.Extensions;
-using NoLifeBot.Services;
 using Qmmands;
 
 namespace NoLifeBot.Commands.Modules
@@ -117,6 +113,16 @@ namespace NoLifeBot.Commands.Modules
                 return value;
             }, "Time Spent In Afk Leaderboard");
         }
+
+        [Command("period", "periods")]
+        public async Task<DiscordCommandResult> PeriodLeaderboardAsync()
+        {
+            var formattedHistories = (await GetVoiceHistoriesForGuildAsync()).OrderByDescending(x => x.VoicePeriodCount).Select(x => $"{Mention.User(x.UserId)} - {x.VoicePeriodCount}").ToArray();
+
+            var pageProvider = new ArrayPageProvider<string>(formattedHistories, Utilities.Formatter<string>("Voice Period Leaderboard"));
+            return Pages(pageProvider);
+        }
+        
 
         private async Task<DiscordCommandResult> GetLeaderboardForStatisticAsync(Func<VoiceHistory, TimeSpan> statisticSelector, string title)
         {

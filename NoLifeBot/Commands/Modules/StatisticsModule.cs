@@ -6,7 +6,6 @@ using Disqord;
 using Disqord.Bot;
 using Disqord.Extensions.Interactivity.Menus.Paged;
 using Microsoft.EntityFrameworkCore;
-using NoLifeBot.Data;
 using NoLifeBot.Extensions;
 using Qmmands;
 
@@ -70,19 +69,51 @@ namespace NoLifeBot.Commands.Modules
             return Pages(pageProvider);
         }
 
-        [Command("periods", "period")]
-        public async Task<DiscordCommandResult> PeriodsAsync()
-            => Response($"I've recorded a total of {await DbContext.VoicePeriods.CountAsync()} voice periods!");
-        
-        [Command("periods", "period")]
-        public async Task<DiscordCommandResult> PeriodsAsync(IMember member)
-            => Response($"I've recorded {await DbContext.VoicePeriods.Where(x => x.UserId == member.Id).CountAsync()} voice periods for {member.Mention}!");
-
-        [Command("active")]
-        public async Task<DiscordCommandResult> ActiveAsync()
+        [Command("time", "total")]
+        public async Task<DiscordCommandResult> TotalTimeAsync()
         {
-            var activePeriods = await DbContext.VoicePeriods.Where(x => x.EndedAt == null).ToListAsync();
-            return Response($"There are {Markdown.Code(activePeriods.Count(x => x.GuildId == Context.GuildId))} active voice periods in this guild and {Markdown.Code(activePeriods.Count)} total");
+            var periods = await DbContext.VoicePeriods.ToListAsync();
+            var totalHours = periods.Sum(x => ((x.EndedAt ?? DateTime.Now) - x.StartedAt).TotalHours);
+            var totalGuildHours = periods.Where(x => x.GuildId == Context.GuildId).Sum(x => ((x.EndedAt ?? DateTime.Now) - x.StartedAt).TotalHours);
+            var totalUserHours = periods.Where(x => x.UserId == Context.Author.Id).Sum(x => ((x.EndedAt ?? DateTime.Now) - x.StartedAt).TotalHours);
+            return Response($"I've watched over {totalHours:F1} hours of voice activity total, {totalGuildHours:F1} hours in this guild, and {totalUserHours:F1} hours of your time");
+        }
+
+        [Group("period", "periods")]
+        public class PeriodModule : DataModule
+        {
+            [Command]
+            public async Task<DiscordCommandResult> PeriodsAsync()
+                => Response($"I've recorded a total of {await DbContext.VoicePeriods.CountAsync()} voice periods!");
+        
+            [Command]
+            public async Task<DiscordCommandResult> PeriodsAsync(IMember member)
+                => Response($"I've recorded {await DbContext.VoicePeriods.Where(x => x.UserId == member.Id).CountAsync()} voice periods for {member.Mention}!");
+            
+            [Command("active")]
+            public async Task<DiscordCommandResult> ActiveAsync()
+            {
+                var activePeriods = await DbContext.VoicePeriods.Where(x => x.EndedAt == null).ToListAsync();
+                return Response($"There are {Markdown.Code(activePeriods.Count(x => x.GuildId == Context.GuildId))} active voice periods in this guild and {Markdown.Code(activePeriods.Count)} total");
+            }
+
+            [Command("length")]
+            public async Task<DiscordCommandResult> LengthAsync()
+            {
+                var periods = await DbContext.VoicePeriods.ToListAsync();
+                var totalHours = periods.Sum(x => ((x.EndedAt ?? DateTime.Now) - x.StartedAt).TotalHours);
+                var averageTimePerPeriod = totalHours / periods.Count;
+                return Response($"The average length of the {Markdown.Code(periods.Count)} periods I've recorded is {averageTimePerPeriod:F1} hours per period");
+            }
+            
+            [Command("length")]
+            public async Task<DiscordCommandResult> LengthAsync(IMember user)
+            {
+                var periods = await DbContext.VoicePeriods.Where(x => x.UserId == user.Id).ToListAsync();
+                var totalHours = periods.Sum(x => ((x.EndedAt ?? DateTime.Now) - x.StartedAt).TotalHours);
+                var averageTimePerPeriod = totalHours / periods.Count;
+                return Response($"The average length of the {Markdown.Code(periods.Count)} periods I've recorded for {user.Mention} is {averageTimePerPeriod:F1} hours per period");
+            }
         }
     }
 }
