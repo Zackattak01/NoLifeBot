@@ -104,7 +104,7 @@ namespace NoLifeBot.Commands.Modules
                 var periods = await DbContext.VoicePeriods.ToListAsync();
                 var totalMinutes = periods.Sum(x => ((x.EndedAt ?? DateTime.Now) - x.StartedAt).TotalMinutes);
                 var averageTimePerPeriod = totalMinutes / periods.Count;
-                return Response($"The average length of the {Markdown.Code(periods.Count)} periods I've recorded is {averageTimePerPeriod:F1} hours per period");
+                return Response($"The average length of the {Markdown.Code(periods.Count)} periods I've recorded is {averageTimePerPeriod:F1} minutes per period");
             }
             
             [Command("length")]
@@ -113,7 +113,7 @@ namespace NoLifeBot.Commands.Modules
                 var periods = await DbContext.VoicePeriods.Where(x => x.UserId == user.Id).ToListAsync();
                 var totalMinutes = periods.Sum(x => ((x.EndedAt ?? DateTime.Now) - x.StartedAt).TotalMinutes);
                 var averageTimePerPeriod = totalMinutes / periods.Count;
-                return Response($"The average length of the {Markdown.Code(periods.Count)} periods I've recorded for {user.Mention} is {averageTimePerPeriod:F1} hours per period");
+                return Response($"The average length of the {Markdown.Code(periods.Count)} periods I've recorded for {user.Mention} is {averageTimePerPeriod:F1} minutes per period");
             }
         }
     }
