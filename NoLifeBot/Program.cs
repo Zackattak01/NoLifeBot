@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Disqord;
 using Disqord.Bot.Hosting;
 using Disqord.Gateway;
-using Disqord.Gateway.Api.Default;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
