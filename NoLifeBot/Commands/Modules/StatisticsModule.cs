@@ -76,7 +76,8 @@ namespace NoLifeBot.Commands.Modules
             var totalHours = periods.Sum(x => ((x.EndedAt ?? DateTime.Now) - x.StartedAt).TotalHours);
             var totalGuildHours = periods.Where(x => x.GuildId == Context.GuildId).Sum(x => ((x.EndedAt ?? DateTime.Now) - x.StartedAt).TotalHours);
             var totalUserHours = periods.Where(x => x.UserId == Context.Author.Id).Sum(x => ((x.EndedAt ?? DateTime.Now) - x.StartedAt).TotalHours);
-            return Response($"I've watched over {totalHours:F1} hours of voice activity total, {totalGuildHours:F1} hours in this guild, and {totalUserHours:F1} hours of your time");
+            var trackingStartedDate = periods.MinBy(x => x.StartedAt)?.StartedAt ?? DateTime.Now;
+            return Response($"I've watched over {totalHours:F1} hours of voice activity total, {totalGuildHours:F1} hours in this guild, and {totalUserHours:F1} hours of your time since {Markdown.Timestamp(trackingStartedDate, Markdown.TimestampFormat.LongDate)}");
         }
 
         [Group("period", "periods")]
@@ -84,11 +85,11 @@ namespace NoLifeBot.Commands.Modules
         {
             [Command]
             public async Task<DiscordCommandResult> PeriodsAsync()
-                => Response($"I've recorded a total of {await DbContext.VoicePeriods.CountAsync()} voice periods!");
+                => Response($"I've recorded a total of {Markdown.Code(await DbContext.VoicePeriods.CountAsync())} voice periods!");
         
             [Command]
             public async Task<DiscordCommandResult> PeriodsAsync(IMember member)
-                => Response($"I've recorded {await DbContext.VoicePeriods.Where(x => x.UserId == member.Id).CountAsync()} voice periods for {member.Mention}!");
+                => Response($"I've recorded {Markdown.Code(await DbContext.VoicePeriods.Where(x => x.UserId == member.Id).CountAsync())} voice periods for {member.Mention}!");
             
             [Command("active")]
             public async Task<DiscordCommandResult> ActiveAsync()
@@ -101,8 +102,8 @@ namespace NoLifeBot.Commands.Modules
             public async Task<DiscordCommandResult> LengthAsync()
             {
                 var periods = await DbContext.VoicePeriods.ToListAsync();
-                var totalHours = periods.Sum(x => ((x.EndedAt ?? DateTime.Now) - x.StartedAt).TotalHours);
-                var averageTimePerPeriod = totalHours / periods.Count;
+                var totalMinutes = periods.Sum(x => ((x.EndedAt ?? DateTime.Now) - x.StartedAt).TotalMinutes);
+                var averageTimePerPeriod = totalMinutes / periods.Count;
                 return Response($"The average length of the {Markdown.Code(periods.Count)} periods I've recorded is {averageTimePerPeriod:F1} hours per period");
             }
             
@@ -110,8 +111,8 @@ namespace NoLifeBot.Commands.Modules
             public async Task<DiscordCommandResult> LengthAsync(IMember user)
             {
                 var periods = await DbContext.VoicePeriods.Where(x => x.UserId == user.Id).ToListAsync();
-                var totalHours = periods.Sum(x => ((x.EndedAt ?? DateTime.Now) - x.StartedAt).TotalHours);
-                var averageTimePerPeriod = totalHours / periods.Count;
+                var totalMinutes = periods.Sum(x => ((x.EndedAt ?? DateTime.Now) - x.StartedAt).TotalMinutes);
+                var averageTimePerPeriod = totalMinutes / periods.Count;
                 return Response($"The average length of the {Markdown.Code(periods.Count)} periods I've recorded for {user.Mention} is {averageTimePerPeriod:F1} hours per period");
             }
         }
