@@ -22,6 +22,15 @@ namespace NoLifeBot
         public static async Task Main(string[] args)
         {
             var host = CreateHostBuilder(args).Build();
+            
+            using (var scope = host.Services.CreateScope())
+            {
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+                var context = scope.ServiceProvider.GetRequiredService<NoLifeBotDbContext>();
+                logger.LogInformation("Migrating database....");
+                await context.Database.MigrateAsync();
+                logger.LogInformation("Migrated database");
+            }
 
             using (host)
             {
