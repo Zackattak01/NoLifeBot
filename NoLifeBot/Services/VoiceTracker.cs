@@ -30,7 +30,7 @@ namespace NoLifeBot.Services
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             await EventSemaphore.WaitAsync(stoppingToken);
-            
+
             await Bot.WaitUntilReadyAsync(stoppingToken);
 
             await RemoveOrphanedVoicePeriodsAsync();
@@ -57,7 +57,7 @@ namespace NoLifeBot.Services
 
         private async Task DiscoverUnknownConnectionsAsync()
         {
-            using var scope = _scopeFactory.CreateScope();
+            await using var scope = _scopeFactory.CreateAsyncScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<NoLifeBotDbContext>();
 
             var knownVoicePeriods = (await dbContext.VoicePeriods.Where(x => x.EndedAt == null).ToListAsync()).ToDictionary(x => x.UserId);
@@ -95,7 +95,7 @@ namespace NoLifeBot.Services
 
         private async Task RemoveOrphanedVoicePeriodsAsync()
         {
-            using var scope = _scopeFactory.CreateScope();
+            await using var scope = _scopeFactory.CreateAsyncScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<NoLifeBotDbContext>();
             
             var orphanedVoicePeriods = await dbContext.VoicePeriods.Where(x => x.EndedAt == null).OrderByDescending(x => x.StartedAt).ToListAsync();
@@ -199,7 +199,7 @@ namespace NoLifeBot.Services
 
         private async ValueTask OnMemberConnectedAsync(VoiceStateUpdatedEventArgs e)
         {
-            using var scope = _scopeFactory.CreateScope();
+            await using var scope = _scopeFactory.CreateAsyncScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<NoLifeBotDbContext>();
 
             var voicePeriod = new VoicePeriod(e.NewVoiceState);
@@ -210,7 +210,7 @@ namespace NoLifeBot.Services
 
         private async ValueTask OnMemberDisconnectedAsync(VoiceStateUpdatedEventArgs e)
         {
-            using var scope = _scopeFactory.CreateScope();
+            await using var scope = _scopeFactory.CreateAsyncScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<NoLifeBotDbContext>();
 
             await EndCurrentVoicePeriodAsync(e.MemberId, dbContext);
@@ -220,7 +220,7 @@ namespace NoLifeBot.Services
 
         private async Task OnMemberVoiceStateChanged(VoiceStateUpdatedEventArgs e)
         {
-            using var scope = _scopeFactory.CreateScope();
+            await using var scope = _scopeFactory.CreateAsyncScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<NoLifeBotDbContext>();
 
             await EndCurrentVoicePeriodAsync(e.MemberId, dbContext);
